@@ -1,6 +1,7 @@
 package com.vkassin.ftracker;
 
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
@@ -14,6 +15,28 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.Toast;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 
 public class GPSTracker extends IntentService implements LocationListener {
 
@@ -74,10 +97,150 @@ public class GPSTracker extends IntentService implements LocationListener {
             Log.i("position", "Your Location is - Lat: " + latitude + " Long: " + longitude);
             stopUsingGPS();
 
+            sendToServer();
+
         }
     }
 
-    public Location getLocation() {
+    private void sendToServer() {
+
+        try{
+
+            // URLEncode user defined data
+
+            String loginValue    = URLEncoder.encode(login.getText().toString(), "UTF-8");
+            String fnameValue  = URLEncoder.encode(fname.getText().toString(), "UTF-8");
+            String emailValue   = URLEncoder.encode(email.getText().toString(), "UTF-8");
+            String passValue    = URLEncoder.encode(pass.getText().toString(), "UTF-8");
+
+
+            // Create URL string
+
+            String URL = "http://androidexample.com/media/webservice/httpget.php?user="+loginValue+"&name="+fnameValue+"&email="+emailValue+"&pass="+passValue;
+
+            Log.i("httpget", URL);
+
+           sendUrl(URL, false);
+        }
+        catch(UnsupportedEncodingException ex)
+        {
+            Log.i("position", "http create Failed!!");
+        }
+    }
+
+    private boolean sendUrl(String url, boolean fromStore) {
+
+        // Create http cliient object to send request to server
+        boolean b = false;
+
+        HttpClient Client = new DefaultHttpClient();
+
+        try
+        {
+            // Create Request to server and get response
+
+            HttpGet httpget = new HttpGet(url);
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+            String SetServerString = Client.execute(httpget, responseHandler);
+
+            // Show response on activity
+
+            Log.i("position", SetServerString);
+
+            if(!fromStore) {
+
+                sendStore();
+            }
+
+            b = true;
+        }
+        catch(Exception ex)
+        {
+            Log.i("position", "http Failed!!");
+
+            if(!fromStore) {
+
+                addToStore(url);
+            }
+        }
+
+        return b;
+    }
+
+    private void saveStoreToFile(List<String> list) {
+
+        FileOutputStream fos;
+        try {
+
+            fos = mContext.openFileOutput("store.ftr", Context.MODE_PRIVATE);
+            ObjectOutputStream os = new ObjectOutputStream(fos);
+            os.writeObject(list);
+            os.close();
+            fos.close();
+
+        } catch (FileNotFoundException e) {
+
+            e.printStackTrace();
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+
+    }
+
+    private List<String> loadStoreFromFile() {
+
+        List<String> list = new ArrayList<String>();
+        FileInputStream fileInputStream;
+        try {
+
+            fileInputStream = mContext.openFileInput("store.ftr");
+            ObjectInputStream oInputStream = new ObjectInputStream(
+                    fileInputStream);
+            Object one = oInputStream.readObject();
+            list = (List<String>) one;
+            oInputStream.close();
+            fileInputStream.close();
+
+        } catch (FileNotFoundException e) {
+
+            Log.i("position", "no stored file");
+
+        } catch (StreamCorruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    private void sendStore() {
+
+        List<String> list = loadStoreFromFile();
+        for (Iterator<String> iterator = list.iterator(); iterator.hasNext(); ) {
+            String url = iterator.next();
+            if (sendUrl(url, true)) {
+
+                iterator.remove();
+            }
+        }
+    }
+
+    private void addToStore(String url) {
+
+        List<String> list = loadStoreFromFile();
+        list.add(url);
+        saveStoreToFile(list);
+    }
+
+    private Location getLocation() {
         try {
             this.canGetLocation = false;
 
@@ -92,10 +255,10 @@ public class GPSTracker extends IntentService implements LocationListener {
             criteria.setPowerRequirement(Criteria.POWER_LOW);
             final String bestProvider = locationManager.getBestProvider(criteria, true);
 
-//            locationManager.requestLocationUpdates(
-//                    bestProvider,
-//                    MIN_TIME_BW_UPDATES,
-//                    MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+            locationManager.requestLocationUpdates(
+                    bestProvider,
+                    MIN_TIME_BW_UPDATES,
+                    MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
             if (locationManager != null) {
                 location = locationManager
                         .getLastKnownLocation(bestProvider);
