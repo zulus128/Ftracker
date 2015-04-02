@@ -64,6 +64,9 @@ public class GPSTracker extends IntentService implements LocationListener {
     // The minimum time between updates in milliseconds
     private static final long MIN_TIME_BW_UPDATES = 1000 * 6 * 1; // 1 minute = 1000 * 60 * 1
 
+    private static String URL = "http://89.107.99.238:10356";
+    private static String URL1 = "http://192.168.2.168";
+
     // Declaring a Location Manager
     protected LocationManager locationManager;
     private String deviceID = "not initialized";
@@ -121,12 +124,12 @@ public class GPSTracker extends IntentService implements LocationListener {
             String dtime    = URLEncoder.encode("\""+currentDT+"\"", "UTF-8");
             String device    = URLEncoder.encode("\""+deviceID+"\"", "UTF-8");
 
-            String URL = "http://89.107.99.238:10356/gps_track.php?device="+device+"&lat="+lat+"&lon="+lon+"&cl_time="+dtime;
+            String URL_ADD = "/gps_track.php?device="+device+"&lat="+lat+"&lon="+lon+"&cl_time="+dtime;
 //            String convertedURL = URLEncoder.encode(URL, "UTF-8");
 
             Log.i("position", URL);
 
-           sendUrl(URL, false);
+           sendUrl(URL_ADD, false);
         }
         catch(UnsupportedEncodingException ex)
         {
@@ -134,7 +137,7 @@ public class GPSTracker extends IntentService implements LocationListener {
         }
     }
 
-    private boolean sendUrl(String url, boolean fromStore) {
+    private boolean sendUrl(String url_add, boolean fromStore) {
 
         // Create http cliient object to send request to server
         boolean b = false;
@@ -145,7 +148,7 @@ public class GPSTracker extends IntentService implements LocationListener {
         {
             // Create Request to server and get response
 
-            HttpGet httpget = new HttpGet(url);
+            HttpGet httpget = new HttpGet(URL + url_add);
             ResponseHandler<String> responseHandler = new BasicResponseHandler();
             String SetServerString = Client.execute(httpget, responseHandler);
 
@@ -153,10 +156,10 @@ public class GPSTracker extends IntentService implements LocationListener {
 
             Log.i("position", SetServerString);
 
-            if(!fromStore) {
-
-                sendStore();
-            }
+//            if(!fromStore) {
+//
+//                sendStore(url_add);
+//            }
 
             b = true;
         }
@@ -165,11 +168,46 @@ public class GPSTracker extends IntentService implements LocationListener {
             Log.i("position", "http Failed!!");
             Log.i("position", ex.toString());
 
+//            if(!fromStore) {
+//
+//                addToStore(url);
+//            }
+        }
+
+        if(!b)
+        try
+        {
+            // Create Request to server and get response
+
+            HttpGet httpget = new HttpGet(URL1 + url_add);
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+            String SetServerString = Client.execute(httpget, responseHandler);
+
+            // Show response on activity
+
+            Log.i("position", SetServerString);
+
+//            if(!fromStore) {
+//
+//                sendStore(url_add);
+//            }
+
+            b = true;
+        }
+        catch(Exception ex)
+        {
+            Log.i("position", "http Failed!!");
+            Log.i("position", ex.toString());
+
+        }
+
             if(!fromStore) {
 
-                addToStore(url);
+                if(!b)
+                    addToStore(url_add);
+                else
+                    sendStore();
             }
-        }
 
         return b;
     }
