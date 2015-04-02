@@ -14,6 +14,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,7 +34,9 @@ import java.io.StreamCorruptedException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -63,6 +66,7 @@ public class GPSTracker extends IntentService implements LocationListener {
 
     // Declaring a Location Manager
     protected LocationManager locationManager;
+    private String deviceID = "not initialized";
 
     public GPSTracker(Context context) {
 
@@ -87,6 +91,9 @@ public class GPSTracker extends IntentService implements LocationListener {
     final protected void onHandleIntent(Intent intent) {
 
         mContext = getApplicationContext();
+//        deviceID = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
+        final TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(Context.TELEPHONY_SERVICE);
+        deviceID = tm.getDeviceId();
         if (canGetLocation()) {
 
             double latitude = getLatitude();
@@ -94,31 +101,30 @@ public class GPSTracker extends IntentService implements LocationListener {
 
             // \n is for new line
 //                    Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
-            Log.i("position", "Your Location is - Lat: " + latitude + " Long: " + longitude);
+            Log.i("position", "Your Location is - Lat: " + latitude + " Long: " + longitude + " " + deviceID);
             stopUsingGPS();
 
-            sendToServer();
+            sendToServer(latitude, longitude);
 
         }
     }
 
-    private void sendToServer() {
+    private void sendToServer(double lat, double lon) {
 
         try{
 
             // URLEncode user defined data
 
-            String loginValue    = URLEncoder.encode(login.getText().toString(), "UTF-8");
-            String fnameValue  = URLEncoder.encode(fname.getText().toString(), "UTF-8");
-            String emailValue   = URLEncoder.encode(email.getText().toString(), "UTF-8");
-            String passValue    = URLEncoder.encode(pass.getText().toString(), "UTF-8");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String currentDT = sdf.format(new Date());
 
+            String dtime    = URLEncoder.encode("\""+currentDT+"\"", "UTF-8");
+            String device    = URLEncoder.encode("\""+deviceID+"\"", "UTF-8");
 
-            // Create URL string
+            String URL = "http://89.107.99.238:10356/gps_track.php?device="+device+"&lat="+lat+"&lon="+lon+"&cl_time="+dtime;
+//            String convertedURL = URLEncoder.encode(URL, "UTF-8");
 
-            String URL = "http://androidexample.com/media/webservice/httpget.php?user="+loginValue+"&name="+fnameValue+"&email="+emailValue+"&pass="+passValue;
-
-            Log.i("httpget", URL);
+            Log.i("position", URL);
 
            sendUrl(URL, false);
         }
@@ -157,6 +163,7 @@ public class GPSTracker extends IntentService implements LocationListener {
         catch(Exception ex)
         {
             Log.i("position", "http Failed!!");
+            Log.i("position", ex.toString());
 
             if(!fromStore) {
 
