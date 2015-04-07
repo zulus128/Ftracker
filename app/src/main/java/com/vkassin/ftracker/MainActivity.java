@@ -52,7 +52,7 @@ public class MainActivity extends ActionBarActivity {
                 notifyintent.setAction("android.intent.action.NOTIFY");
                 PendingIntent notifysender = PendingIntent.getBroadcast(MainActivity.this, 0, notifyintent,
                         PendingIntent.FLAG_UPDATE_CURRENT);
-                am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 600 * 1000,
+                am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 10 * 1000,
                         notifysender);
             }
         });

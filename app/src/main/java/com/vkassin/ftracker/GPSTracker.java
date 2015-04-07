@@ -292,78 +292,82 @@ public class GPSTracker extends IntentService implements LocationListener {
             locationManager = (LocationManager) mContext
                     .getSystemService(LOCATION_SERVICE);
 
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            criteria.setAltitudeRequired(false);
-            criteria.setBearingRequired(false);
-            criteria.setCostAllowed(true);
-            criteria.setPowerRequirement(Criteria.POWER_LOW);
-            final String bestProvider = locationManager.getBestProvider(criteria, true);
-
-            locationManager.requestLocationUpdates(
-                    bestProvider,
-                    MIN_TIME_BW_UPDATES,
-                    MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-            if (locationManager != null) {
-                location = locationManager
-                        .getLastKnownLocation(bestProvider);
-                if (location != null) {
-
-                    this.canGetLocation = true;
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                }
-            }
-
-//            // getting GPS status
-//            isGPSEnabled = locationManager
-//                    .isProviderEnabled(LocationManager.GPS_PROVIDER);
+//            Log.i("position", locationManager.getAllProviders().toString());
+//            Criteria criteria = new Criteria();
+//            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+//            criteria.setAltitudeRequired(false);
+//            criteria.setBearingRequired(false);
+//            criteria.setCostAllowed(true);
+//            criteria.setPowerRequirement(Criteria.POWER_LOW);
+//            final String bestProvider = locationManager.getBestProvider(criteria, true);
+//            Log.i("position", "best provider: " + bestProvider);
 //
-//            // getting network status
-//            isNetworkEnabled = locationManager
-//                    .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+//            locationManager.requestLocationUpdates(
+//                    bestProvider,
+//                    MIN_TIME_BW_UPDATES,
+//                    MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+//            if (locationManager != null) {
+//                location = locationManager
+//                        .getLastKnownLocation(bestProvider);
+//                if (location != null) {
 //
-//            if (!isGPSEnabled && !isNetworkEnabled) {
-//                // no network provider is enabled
-//                Log.i("position", "no network provider is enabled");
-//
-//            } else {
-//                this.canGetLocation = true;
-//                // First get location from Network Provider
-//                if (isNetworkEnabled) {
-//                    locationManager.requestLocationUpdates(
-//                            LocationManager.NETWORK_PROVIDER,
-//                            MIN_TIME_BW_UPDATES,
-//                            MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-//                    Log.i("position", "Network");
-//                    if (locationManager != null) {
-//                        location = locationManager
-//                                .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-//                        if (location != null) {
-//                            latitude = location.getLatitude();
-//                            longitude = location.getLongitude();
-//                        }
-//                    }
-//                }
-//                // if GPS Enabled get lat/long using GPS Services
-//                if (isGPSEnabled) {
-//                    if (location == null) {
-//                        locationManager.requestLocationUpdates(
-//                                LocationManager.GPS_PROVIDER,
-//                                MIN_TIME_BW_UPDATES,
-//                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-//                        Log.i("position", "GPS Enabled");
-//                        if (locationManager != null) {
-//                            location = locationManager
-//                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//                            if (location != null) {
-//                                latitude = location.getLatitude();
-//                                longitude = location.getLongitude();
-//                            }
-//                        }
-//                    }
+//                    this.canGetLocation = true;
+//                    latitude = location.getLatitude();
+//                    longitude = location.getLongitude();
 //                }
 //            }
+
+            // getting GPS status
+            isGPSEnabled = locationManager
+                    .isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+            // getting network status
+            isNetworkEnabled = locationManager
+                    .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+            if (!isGPSEnabled && !isNetworkEnabled) {
+                // no network provider is enabled
+                Log.i("position", "no network provider is enabled");
+
+            } else {
+//                this.canGetLocation = true;
+                // First get location from Network Provider
+                if (isNetworkEnabled) {
+                    locationManager.requestLocationUpdates(
+                            LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                    Log.i("position", "Network");
+                    if (locationManager != null) {
+                        location = locationManager
+                                .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                        if (location != null) {
+                            this.canGetLocation = true;
+                            latitude = location.getLatitude();
+                            longitude = location.getLongitude();
+                        }
+                    }
+                }
+                // if GPS Enabled get lat/long using GPS Services
+                if (isGPSEnabled) {
+                    if (location == null) {
+                        locationManager.requestLocationUpdates(
+                                LocationManager.GPS_PROVIDER,
+                                MIN_TIME_BW_UPDATES,
+                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                        Log.i("position", "GPS Enabled");
+                        if (locationManager != null) {
+                            location = locationManager
+                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                            if (location != null) {
+                                this.canGetLocation = true;
+                                latitude = location.getLatitude();
+                                longitude = location.getLongitude();
+                            }
+                        }
+                    }
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
