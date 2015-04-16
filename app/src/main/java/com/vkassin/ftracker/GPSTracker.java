@@ -276,6 +276,7 @@ public class GPSTracker extends IntentService implements LocationListener {
                 iterator.remove();
             }
         }
+        saveStoreToFile(list);
     }
 
     private void addToStore(String url) {
