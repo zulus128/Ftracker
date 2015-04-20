@@ -7,10 +7,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -90,6 +92,19 @@ public class GPSTracker extends IntentService implements LocationListener {
 
     }
 
+    public float getBatteryLevel() {
+        Intent batteryIntent = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        int level = batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        // Error checking that probably isn't needed but I added just in case.
+        if(level == -1 || scale == -1) {
+            return 50.0f;
+        }
+
+        return ((float)level / (float)scale) * 100.0f;
+    }
+
     @Override
     final protected void onHandleIntent(Intent intent) {
 
@@ -106,7 +121,7 @@ public class GPSTracker extends IntentService implements LocationListener {
 //                    Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
             Log.i("position", "Your Location is - Lat: " + latitude + " Long: " + longitude + " " + deviceID);
             stopUsingGPS();
-
+//            Log.i("position", "Battery: " + getBatteryLevel());
             sendToServer(latitude, longitude);
 
         }
@@ -124,7 +139,8 @@ public class GPSTracker extends IntentService implements LocationListener {
             String dtime    = URLEncoder.encode("\""+currentDT+"\"", "UTF-8");
             String device    = URLEncoder.encode("\""+deviceID+"\"", "UTF-8");
 
-            String URL_ADD = "/gps_track.php?device="+device+"&lat="+lat+"&lon="+lon+"&cl_time="+dtime;
+            String URL_ADD = "/gps_track.php?device="+device+"&lat="+lat+"&lon="+lon+"&cl_time="+dtime+
+                    "&bat="+getBatteryLevel();
 //            String convertedURL = URLEncoder.encode(URL, "UTF-8");
 
             Log.i("position", URL);
