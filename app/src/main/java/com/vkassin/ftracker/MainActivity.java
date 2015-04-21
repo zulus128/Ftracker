@@ -65,6 +65,7 @@ public class MainActivity extends ActionBarActivity {
         });
 
         final Button button1 = (Button) findViewById(R.id.buttonStop);
+        button1.setVisibility(View.GONE);
         button1.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Log.i("position", "stop pressed");
